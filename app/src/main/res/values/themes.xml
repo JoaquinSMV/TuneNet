@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Este es el tema principal de la aplicación -->
+    <style name="Theme.TuneNet" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Nuevo tema para la SplashScreen -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Fondo de la SplashScreen -->
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+        <!-- Icono que se mostrará en el centro -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/icono_app</item> <!-- Cambia esto por tu logo si tienes uno específico -->
+        <!-- Tema al que se transicionará después de la SplashScreen -->
+        <item name="postSplashScreenTheme">@style/Theme.TuneNet</item>
+    </style>
+</resources>
