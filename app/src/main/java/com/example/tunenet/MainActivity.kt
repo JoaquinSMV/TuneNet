@@ -33,15 +33,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 1. Instalar SplashScreen
         installSplashScreen().apply {
 
-            // Animación de salida: giro del icono
+            // Animación para que gire el icono...
             setOnExitAnimationListener { splashScreenViewProvider ->
 
                 val iconView = splashScreenViewProvider.iconView
 
-                // ANIMACIÓN: rotación completa de 360 grados
                 iconView.animate()
                     .rotationBy(360f)
                     .setDuration(500L) // 1 segundo
