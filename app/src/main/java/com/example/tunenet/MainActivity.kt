@@ -49,9 +49,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.compose.AsyncImage
 import com.example.tunenet.ui.theme.AppTheme
 
-// ----------------------------------------------------------------
 // 1. MODELO DE DATOS
-// ----------------------------------------------------------------
+
 data class MusicItem(
     val id: Int,
     val title: String,
@@ -74,9 +73,8 @@ val sampleMusicData = mutableStateListOf(
 
 enum class CurrentScreen { LIST, DETAIL, FAV_LIST, FAV_DETAIL, PROFILE, ABOUT }
 
-// ----------------------------------------------------------------
 // 2. MAIN ACTIVITY
-// ----------------------------------------------------------------
+
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,9 +107,24 @@ class MainActivity : ComponentActivity() {
                     if (isTablet) {
                         NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
                             Spacer(modifier = Modifier.weight(1f))
-                            NavigationRailItem(icon = { Icon(Icons.Filled.Home, null) }, label = { Text("Inicio") }, selected = currentScreen == CurrentScreen.LIST || currentScreen == CurrentScreen.DETAIL, onClick = { currentScreen = CurrentScreen.LIST })
-                            NavigationRailItem(icon = { Icon(Icons.Filled.Favorite, null) }, label = { Text("Favoritos") }, selected = currentScreen == CurrentScreen.FAV_LIST || currentScreen == CurrentScreen.FAV_DETAIL, onClick = { currentScreen = CurrentScreen.FAV_LIST })
-                            NavigationRailItem(icon = { Icon(Icons.Filled.Person, null) }, label = { Text("Perfil") }, selected = currentScreen == CurrentScreen.PROFILE, onClick = { currentScreen = CurrentScreen.PROFILE })
+                            NavigationRailItem(
+                                icon = { Icon(Icons.Filled.Home, null) },
+                                label = { Text("Inicio") },
+                                selected = currentScreen == CurrentScreen.LIST || currentScreen == CurrentScreen.DETAIL,
+                                onClick = { currentScreen = CurrentScreen.LIST }
+                                              )
+                            NavigationRailItem(
+                                icon = { Icon(Icons.Filled.Favorite, null) },
+                                label = { Text("Favoritos") },
+                                selected = currentScreen == CurrentScreen.FAV_LIST || currentScreen == CurrentScreen.FAV_DETAIL,
+                                onClick = { currentScreen = CurrentScreen.FAV_LIST }
+                                              )
+                            NavigationRailItem(
+                                icon = { Icon(Icons.Filled.Person, null) },
+                                label = { Text("Perfil") }, selected = currentScreen == CurrentScreen.PROFILE,
+                                onClick = { currentScreen = CurrentScreen.PROFILE }
+                                              )
+
                             Spacer(modifier = Modifier.weight(1f))
                         }
                     }
@@ -140,9 +153,21 @@ class MainActivity : ComponentActivity() {
                         bottomBar = {
                             if (!isTablet) {
                                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                                    NavigationBarItem(icon = { Icon(Icons.Filled.Home, null) }, label = { Text("Inicio") }, selected = currentScreen == CurrentScreen.LIST || currentScreen == CurrentScreen.DETAIL, onClick = { currentScreen = CurrentScreen.LIST })
-                                    NavigationBarItem(icon = { Icon(Icons.Filled.Favorite, null) }, label = { Text("Favoritos") }, selected = currentScreen == CurrentScreen.FAV_LIST || currentScreen == CurrentScreen.FAV_DETAIL, onClick = { currentScreen = CurrentScreen.FAV_LIST })
-                                    NavigationBarItem(icon = { Icon(Icons.Filled.Person, null) }, label = { Text("Perfil") }, selected = currentScreen == CurrentScreen.PROFILE, onClick = { currentScreen = CurrentScreen.PROFILE })
+                                    NavigationBarItem(
+                                        icon = { Icon(Icons.Filled.Home, null) },
+                                        label = { Text("Inicio") },
+                                        selected = currentScreen == CurrentScreen.LIST || currentScreen == CurrentScreen.DETAIL,
+                                        onClick = { currentScreen = CurrentScreen.LIST })
+                                    NavigationBarItem(
+                                        icon = { Icon(Icons.Filled.Favorite, null) },
+                                        label = { Text("Favoritos") },
+                                        selected = currentScreen == CurrentScreen.FAV_LIST || currentScreen == CurrentScreen.FAV_DETAIL,
+                                        onClick = { currentScreen = CurrentScreen.FAV_LIST })
+                                    NavigationBarItem(
+                                        icon = { Icon(Icons.Filled.Person, null) },
+                                        label = { Text("Perfil") },
+                                        selected = currentScreen == CurrentScreen.PROFILE,
+                                        onClick = { currentScreen = CurrentScreen.PROFILE })
                                 }
                             }
                         },
@@ -188,16 +213,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ----------------------------------------------------------------
 // 3. PANTALLAS CON LÓGICA DE GRID VS LISTA
-// ----------------------------------------------------------------
 
 @Composable
 fun ElemListScreen(musicItems: List<MusicItem>, isTablet: Boolean, onItemClick: (MusicItem) -> Unit, onFavClick: (MusicItem) -> Unit) {
     if (isTablet) {
-        // MODO GRID (TABLET)
+        // MODO GRID PARA LA TABLE
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text("Descubrir Música", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp))
+            Text("Descubrir Música",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 150.dp), // Celdas adaptables
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -207,9 +232,11 @@ fun ElemListScreen(musicItems: List<MusicItem>, isTablet: Boolean, onItemClick: 
             }
         }
     } else {
-        // MODO LISTA (MÓVIL)
+        // MODO LISTA PARA EL MÓVIL
         LazyColumn(contentPadding = PaddingValues(16.dp), modifier = Modifier.fillMaxSize()) {
-            item { Text("Descubrir Música", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp)) }
+            item { Text("Descubrir Música",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp)) }
             items(musicItems) { item -> TuneElementCard(item, { onItemClick(item) }, onFavClick) }
         }
     }
@@ -220,8 +247,13 @@ fun FavListScreen(musicItems: List<MusicItem>, isTablet: Boolean, onItemClick: (
     if (isTablet) {
         // MODO GRID (TABLET)
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            Text("Mis Favoritos", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp))
-            if (musicItems.isEmpty()) Text("No tienes favoritos aún.", style = MaterialTheme.typography.bodyLarge)
+            Text("Mis Favoritos",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp))
+            if (musicItems.isEmpty())
+                Text("No tienes favoritos aún.",
+                     style = MaterialTheme.typography.bodyLarge)
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 150.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -232,51 +264,70 @@ fun FavListScreen(musicItems: List<MusicItem>, isTablet: Boolean, onItemClick: (
         }
     } else {
         // MODO LISTA (MÓVIL)
-        LazyColumn(contentPadding = PaddingValues(16.dp), modifier = Modifier.fillMaxSize()) {
-            item { Text("Mis Favoritos", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 16.dp)) }
+        LazyColumn(contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.fillMaxSize())
+        {
+            item { Text("Mis Favoritos",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)) }
             if (musicItems.isEmpty()) item { Text("No tienes favoritos aún.", style = MaterialTheme.typography.bodyLarge) }
             items(musicItems) { item -> TuneElementCard(item, { onItemClick(item) }, onRemoveFav) }
         }
     }
 }
 
-// ----------------------------------------------------------------
 // 4. COMPONENTES Y TARJETAS
-// ----------------------------------------------------------------
 
-// Tarjeta Horizontal para Móvil
+//Tarjeta Horizontal para Móvil
 @Composable
 fun TuneElementCard(item: MusicItem, onClick: () -> Unit, onFavClick: (MusicItem) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() }, elevation = CardDefaults.cardElevation(defaultElevation = 2.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(model = item.coverUrl, contentDescription = null, contentScale = ContentScale.Crop, alignment = Alignment.TopStart, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray))
+            AsyncImage(model = item.coverUrl, contentDescription = null, contentScale = ContentScale.Crop,
+                alignment = Alignment.TopStart, modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)).background(Color.LightGray))
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
                 Text(item.artist, style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = { onFavClick(item) }) {
-                Icon(imageVector = Icons.Filled.Favorite, contentDescription = null, tint = if (item.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray)
+                Icon(imageVector = Icons.Filled.Favorite, contentDescription = null,
+                    tint = if (item.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray)
             }
         }
     }
 }
 
-// NUEVA: Tarjeta Vertical para Grid (Tablet)
+//Tarjeta Vertical para la Tablet
 @Composable
 fun TuneGridCard(item: MusicItem, onClick: () -> Unit, onFavClick: (MusicItem) -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }, elevation = CardDefaults.cardElevation(defaultElevation = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             AsyncImage(
-                model = item.coverUrl, contentDescription = null, contentScale = ContentScale.Crop,
+                model = item.coverUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(140.dp).background(Color.LightGray)
-            )
-            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                      )
+            Column(modifier = Modifier.padding(12.dp),
+                   horizontalAlignment = Alignment.CenterHorizontally
+                  )
+            {
+
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(item.artist, style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 Spacer(modifier = Modifier.height(8.dp))
-                IconButton(onClick = { onFavClick(item) }) {
-                    Icon(imageVector = Icons.Filled.Favorite, contentDescription = null, tint = if (item.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray)
+
+                IconButton(onClick = { onFavClick(item) })
+                {
+                    Icon(imageVector = Icons.Filled.Favorite,
+                        contentDescription = null,
+                        tint = if (item.isFavorite) MaterialTheme.colorScheme.primary else Color.Gray)
                 }
             }
         }
@@ -285,31 +336,48 @@ fun TuneGridCard(item: MusicItem, onClick: () -> Unit, onFavClick: (MusicItem) -
 
 @Composable
 fun DetailItemScreen(item: MusicItem, onFavClick: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
         DetailHeader(item)
         Spacer(modifier = Modifier.height(24.dp))
         Button(
             onClick = onFavClick,
             colors = ButtonDefaults.buttonColors(containerColor = if (item.isFavorite) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary)
         ) {
-            Icon(imageVector = if(item.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = null, tint = if(item.isFavorite) MaterialTheme.colorScheme.primary else Color.White)
+            Icon(imageVector = if(item.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = null,
+                tint = if(item.isFavorite) MaterialTheme.colorScheme.primary else Color.White)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if(item.isFavorite) "Quitar de favoritos" else "Añadir a favoritos", color = if (item.isFavorite) MaterialTheme.colorScheme.onSurfaceVariant else Color.White)
+            Text(if(item.isFavorite) "Quitar de favoritos" else "Añadir a favoritos",
+                color = if (item.isFavorite) MaterialTheme.colorScheme.onSurfaceVariant else Color.White)
         }
     }
 }
 
 @Composable
 fun DetailFavScreen(item: MusicItem) {
-    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
         DetailHeader(item)
         Spacer(modifier = Modifier.height(24.dp))
         HorizontalDivider()
-        Text("Comentarios", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp), color = MaterialTheme.colorScheme.primary)
+        Text(
+            "Comentarios",
+             style = MaterialTheme.typography.titleMedium,
+             modifier = Modifier.padding(16.dp),
+             color = MaterialTheme.colorScheme.primary
+            )
         item.comments.forEach { comment ->
-            Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Person, null, modifier = Modifier.size(24.dp))
+            Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant))
+            {
+                Row(modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically)
+                {
+                    Icon(Icons.Filled.Person,
+                         null,
+                         modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(8.dp)); Text(comment)
                 }
             }
@@ -334,26 +402,61 @@ fun DetailHeader(item: MusicItem) {
 
 @Composable
 fun ProfileScreen() {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Filled.Person, null, modifier = Modifier.size(100.dp), tint = MaterialTheme.colorScheme.primary)
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp),
+           horizontalAlignment = Alignment.CenterHorizontally,
+           verticalArrangement = Arrangement.Center)
+    {
+        Icon(
+            Icons.Filled.Person,
+            null,
+            modifier = Modifier.size(100.dp),
+            tint = MaterialTheme.colorScheme.primary
+            )
         Spacer(modifier = Modifier.height(16.dp))
+
         Text("Usuario: Joaquín", style = MaterialTheme.typography.headlineSmall)
         Text("joaquinity@gmail.com", style = MaterialTheme.typography.bodyMedium)
+
         Spacer(modifier = Modifier.height(32.dp))
-        Button(onClick = { }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Cerrar Sesión") }
+
+        Button(
+            onClick = { },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+              )
+        {
+            Text("Cerrar Sesión")
+        }
     }
 }
 
 @Composable
 fun AboutScreen() {
     val context = LocalContext.current
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp),
+           horizontalAlignment = Alignment.CenterHorizontally,
+           verticalArrangement = Arrangement.Center)
+    {
         Text("TuneNet", fontSize = 38.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         Text("Versión: 2.2", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(32.dp))
-        Button(onClick = {
-            val emailIntent = Intent(Intent.ACTION_SENDTO).apply { data = Uri.parse("mailto:"); putExtra(Intent.EXTRA_EMAIL, arrayOf("joaquinity@gmail.com")) }
-            try { context.startActivity(Intent.createChooser(emailIntent, "Enviar correo...")) } catch (e: Exception) {}
-        }) { Icon(Icons.Filled.Email, null); Spacer(modifier = Modifier.width(8.dp)); Text("Soporte") }
+        Button(onClick =
+            {
+            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:");
+                putExtra(Intent.EXTRA_EMAIL,
+                arrayOf("joaquinity@gmail.com"))
+                                                                         }
+
+            try
+            { context.startActivity(Intent.createChooser(emailIntent, "Enviar correo...")) }
+            catch (e: Exception) {}
+
+            })
+        {
+            Icon(Icons.Filled.Email,
+                 null);
+                 Spacer(modifier = Modifier.width(8.dp));
+                 Text("Soporte")
+        }
     }
 }

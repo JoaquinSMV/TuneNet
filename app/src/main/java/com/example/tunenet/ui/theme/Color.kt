@@ -2,7 +2,7 @@ package com.example.tunenet.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// TUS COLORES PERSONALIZADOS
+//MIS COLORES PERSONALIZADOS
 val PinkLogo = Color(0xFFFF005C)      // Rosa fuerte (Primary)
 val PinkPastel = Color(0xFFFFD1DC)    // Rosa pastel (Container)
 val StarYellow = Color(0xFFFFD700)    // Amarillo (Secondary)
@@ -10,8 +10,7 @@ val BlackText = Color(0xFF121212)
 val WhitePure = Color(0xFFFFFFFF)
 val SurfaceGrey = Color(0xFFF5F5F5)
 
-// Asignamos tus colores a las variables que Material Theme espera
-// (Así no rompes la estructura de Theme.kt)
+
 val primaryLight = PinkLogo
 val onPrimaryLight = WhitePure
 val primaryContainerLight = PinkPastel

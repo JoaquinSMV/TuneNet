@@ -13,7 +13,8 @@ val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
     providerPackage = "com.google.android.gms",
     certificates = R.array.com_google_android_gms_fonts_certs
-)
+)  //Este es para que basicamente pueda usar imagenes url , tuve que importar un certificado en
+   // build.gradle.kts(Module:app) = Para que no me dieran errores , y asi no tener que depender de descargar imagenes
 
 val bodyFontFamily = FontFamily(
     Font(
@@ -29,7 +30,7 @@ val displayFontFamily = FontFamily(
     )
 )
 
-// Default Material 3 typography values
+
 val baseline = Typography()
 
 val AppTypography = Typography(
@@ -48,5 +49,5 @@ val AppTypography = Typography(
     labelLarge = baseline.labelLarge.copy(fontFamily = bodyFontFamily),
     labelMedium = baseline.labelMedium.copy(fontFamily = bodyFontFamily),
     labelSmall = baseline.labelSmall.copy(fontFamily = bodyFontFamily),
-)
+) //Esta es la tipografia de mi app
 

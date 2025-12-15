@@ -70,7 +70,6 @@ private val darkScheme = darkColorScheme(
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // CAMBIO IMPORTANTE: Ponemos esto en false para forzar TUS colores rosas
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
