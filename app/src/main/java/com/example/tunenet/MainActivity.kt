@@ -23,12 +23,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -48,6 +51,8 @@ import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.compose.AsyncImage
 import com.example.tunenet.ui.theme.AppTheme
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 
 // 1. MODELO DE DATOS
 
@@ -59,15 +64,15 @@ data class MusicItem(
     val description: String,
     val coverUrl: String,
     var isFavorite: Boolean = false,
-    val comments: MutableList<String> = mutableListOf("¡Temazo!", "Increíble producción.")
+    val comments: SnapshotStateList<String> = mutableStateListOf()
 )
 
 val sampleMusicData = mutableStateListOf(
-    MusicItem(1, "Nada que perder", "Robe", "Rock Transgresivo", "La poesía inconfundible de Robe Iniesta.", "https://images.genius.com/e9b60713f3605db65611c24c15c2891c.1000x1000x1.jpg", true),
-    MusicItem(2, "A Match Into Water", "Pierce The Veil", "Post-Hardcore", "Energía pura y riffs rápidos.", "https://i.pinimg.com/736x/87/75/47/8775472c70a9bf2069b0e8c07e079950.jpg", false),
-    MusicItem(3, "Duality", "Slipknot", "Nu Metal", "El himno del caos controlado.", "https://i.scdn.co/image/ab67616d0000b2736b3463e7160d333ada4b175a", true),
-    MusicItem(4, "Jesucristo García", "Extremoduro", "Rock Urbano", "Un clásico absoluto del rock español.", "https://i.ytimg.com/vi/2DpqV3joVOE/hqdefault.jpg", false),
-    MusicItem(5, "Be Quiet and Drive", "Deftones", "Alt-Metal", "Atmósfera etérea y guitarras pesadas.", "https://i.pinimg.com/1200x/b7/a3/b8/b7a3b89f982fd4aca139b7de2c1739a2.jpg", true),
+    MusicItem(1, "Nada que perder", "Robe", "Rock Transgresivo", "La poesía inconfundible de Robe Iniesta.", "https://images.genius.com/e9b60713f3605db65611c24c15c2891c.1000x1000x1.jpg", true, mutableListOf("Un grande robe", "Poesia para todos los oidos", "F por robe una pena muy grande :(").toMutableStateList() ),
+    MusicItem(2, "A Match Into Water", "Pierce The Veil", "Post-Hardcore", "Energía pura y riffs rápidos.", "https://i.pinimg.com/736x/87/75/47/8775472c70a9bf2069b0e8c07e079950.jpg", false, mutableListOf("Brutal el breakdown.").toMutableStateList()),
+    MusicItem(3, "Duality", "Slipknot", "Nu Metal", "El himno del caos controlado.", "https://i.scdn.co/image/ab67616d0000b2736b3463e7160d333ada4b175a", true, mutableListOf("I push my fingers into my eyes...", "Clásico.").toMutableStateList()),
+    MusicItem(4, "Jesucristo García", "Extremoduro", "Rock Urbano", "Un clásico absoluto del rock español.", "https://i.ytimg.com/vi/2DpqV3joVOE/hqdefault.jpg", false, mutableListOf("Esa guitarra...nostalgica para cualquiera").toMutableStateList()),
+    MusicItem(5, "Be Quiet and Drive", "Deftones", "Alt-Metal", "Atmósfera etérea y guitarras pesadas.", "https://i.pinimg.com/1200x/b7/a3/b8/b7a3b89f982fd4aca139b7de2c1739a2.jpg", true, mutableListOf("Vibe nocturno.").toMutableStateList()),
     MusicItem(6, "Smells Like Teen Spirit", "Nirvana", "Grunge", "El himno generacional de los 90.", "https://i.pinimg.com/736x/74/e4/4e/74e44e84d046f8c101fc7eadf4bc5b85.jpg", false)
 )
 
@@ -101,7 +106,80 @@ class MainActivity : ComponentActivity() {
 
                 var currentScreen by remember { mutableStateOf(CurrentScreen.LIST) }
                 var selectedItem by remember { mutableStateOf<MusicItem?>(null) }
+                // Esta variable ya no se usa porque quitamos el FAB, pero la dejo para no romper tu estructura
                 val showFab = currentScreen == CurrentScreen.FAV_DETAIL
+
+                //Para que el usuario cuando escriba busque
+
+                var searchText by remember { mutableStateOf("") }
+
+                //Ahora para controlar las ventanas de borrar
+
+                var showDeleteDialog by remember {mutableStateOf(false)} // Pa saber si se muestra o no
+                var itemToDelete by remember { mutableStateOf<MusicItem?>(null) } // Para saber que item vamos a borrar
+
+                // Pa entenderme yo = Si esta vacio --> Lista normal , si tiene texto --> Filtro por titulo o por artista , ignorando las Mayusculas ...
+
+                val itemsFiltred = if (searchText.isEmpty())
+                {
+                    sampleMusicData
+                }
+                else
+                {
+                    sampleMusicData.filter {
+
+                        it.title.contains(searchText, ignoreCase = true)
+                                ||
+                                it.artist.contains(searchText, ignoreCase = true)
+
+                    }
+
+                }
+
+                if(showDeleteDialog)
+                {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false }, // Si pinchas fuera, se cierra
+                        title = { Text("¿Eliminar de favoritos?") },
+                        text = {Text("Vas a eliminar '${itemToDelete?.title}' de la lista ¿Estas seguro? ")},
+                        confirmButton = {
+                            TextButton(
+
+                                onClick = {
+
+                                    itemToDelete?.let { toggleFavorite(it) }
+
+                                    //Por si estamos viendo detalles volvemos a la lista principal
+
+                                    if (selectedItem?.id == itemToDelete?.id) {
+
+                                        currentScreen = CurrentScreen.FAV_LIST
+
+                                        selectedItem = null
+
+                                    }
+
+                                    showDeleteDialog = false //Para cerrar el dialogo
+
+                                    //Y limpiamos lo que seria la variable
+
+                                    itemToDelete = null
+
+                                }
+
+                            )
+                            {
+                                Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                            }
+                        },
+
+                        dismissButton = {
+
+                            TextButton(onClick = {showDeleteDialog = false}) { Text("Cancelar") }
+
+                        }
+                    )
+                }
 
                 Row(modifier = Modifier.fillMaxSize()) {
                     if (isTablet) {
@@ -112,18 +190,18 @@ class MainActivity : ComponentActivity() {
                                 label = { Text("Inicio") },
                                 selected = currentScreen == CurrentScreen.LIST || currentScreen == CurrentScreen.DETAIL,
                                 onClick = { currentScreen = CurrentScreen.LIST }
-                                              )
+                            )
                             NavigationRailItem(
                                 icon = { Icon(Icons.Filled.Favorite, null) },
                                 label = { Text("Favoritos") },
                                 selected = currentScreen == CurrentScreen.FAV_LIST || currentScreen == CurrentScreen.FAV_DETAIL,
                                 onClick = { currentScreen = CurrentScreen.FAV_LIST }
-                                              )
+                            )
                             NavigationRailItem(
                                 icon = { Icon(Icons.Filled.Person, null) },
                                 label = { Text("Perfil") }, selected = currentScreen == CurrentScreen.PROFILE,
                                 onClick = { currentScreen = CurrentScreen.PROFILE }
-                                              )
+                            )
 
                             Spacer(modifier = Modifier.weight(1f))
                         }
@@ -133,11 +211,61 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(1f),
                         topBar = {
                             CenterAlignedTopAppBar(
-                                title = { Text("TuneNet", fontWeight = FontWeight.Bold) },
+                                title = {
+                                    if(currentScreen == CurrentScreen.LIST){
+
+                                        //Si estamos en lista que muesrre el buscador
+
+                                        TextField(
+
+                                            value = searchText,
+                                            onValueChange = { searchText = it },
+                                            placeholder = { Text ("Buscar...") },
+                                            singleLine = true,
+                                            colors = TextFieldDefaults.colors(
+
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent
+
+                                            ),
+
+                                            trailingIcon = {
+
+                                                if(searchText.isNotEmpty()){
+
+                                                    IconButton(onClick = {searchText = ""}) {
+                                                        Icon(Icons.Filled.Close, contentDescription = "Borrar")
+                                                    }
+
+                                                }
+                                                else
+                                                {
+                                                    Icon(Icons.Filled.Search, contentDescription = "Buscar")
+                                                }
+
+                                            }
+
+                                        )
+
+                                    }
+                                    else
+                                    {
+
+                                        //Si no estamos en dicha lista pues que se muestre un titulo basico
+
+                                        Text("TuneNet", fontWeight = FontWeight.Bold)
+
+                                    }
+
+                                },
+
                                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
+
                                 navigationIcon = {
                                     if (currentScreen == CurrentScreen.DETAIL || currentScreen == CurrentScreen.FAV_DETAIL || currentScreen == CurrentScreen.ABOUT) {
                                         IconButton(onClick = { currentScreen = if(currentScreen == CurrentScreen.FAV_DETAIL) CurrentScreen.FAV_LIST else CurrentScreen.LIST }) {
@@ -145,11 +273,13 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
+
                                 actions = {
                                     IconButton(onClick = { currentScreen = CurrentScreen.ABOUT }) { Icon(Icons.Filled.Info, contentDescription = "About") }
                                 }
                             )
                         },
+
                         bottomBar = {
                             if (!isTablet) {
                                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
@@ -170,27 +300,15 @@ class MainActivity : ComponentActivity() {
                                         onClick = { currentScreen = CurrentScreen.PROFILE })
                                 }
                             }
-                        },
-                        floatingActionButton = {
-                            if (showFab) {
-                                FloatingActionButton(
-                                    onClick = {
-                                        selectedItem?.let { item ->
-                                            item.comments.add("¡Nuevo comentario!")
-                                            val temp = selectedItem; selectedItem = null; selectedItem = temp
-                                        }
-                                    },
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ) { Icon(Icons.Filled.Add, contentDescription = "Añadir", tint = Color.White) }
-                            }
                         }
+                        // AQUI HE QUITADO EL FLOATING ACTION BUTTON COMO PEDISTE
                     ) { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                             when (currentScreen) {
                                 // PASAMOS 'isTablet' a las pantallas de lista
-                                CurrentScreen.LIST -> ElemListScreen(sampleMusicData, isTablet, { selectedItem = it; currentScreen = CurrentScreen.DETAIL }, { toggleFavorite(it); if (selectedItem?.id == it.id) selectedItem = it })
+                                CurrentScreen.LIST -> ElemListScreen(itemsFiltred, isTablet, { item -> selectedItem = item; currentScreen = CurrentScreen.DETAIL }, { toggleFavorite(it); if (selectedItem?.id == it.id) selectedItem = it })
                                 CurrentScreen.DETAIL -> selectedItem?.let { DetailItemScreen(it, { selectedItem = toggleFavorite(it) }) }
-                                CurrentScreen.FAV_LIST -> FavListScreen(sampleMusicData.filter { it.isFavorite }.toList(), isTablet, { selectedItem = it; currentScreen = CurrentScreen.FAV_DETAIL }, { toggleFavorite(it); if (selectedItem?.id == it.id) selectedItem = it })
+                                CurrentScreen.FAV_LIST -> FavListScreen(sampleMusicData.filter { it.isFavorite }.toList(), isTablet, { item ->  selectedItem = item; currentScreen = CurrentScreen.FAV_DETAIL },  {item -> itemToDelete = item; showDeleteDialog = true})
                                 CurrentScreen.FAV_DETAIL -> selectedItem?.let { DetailFavScreen(it) }
                                 CurrentScreen.PROFILE -> ProfileScreen()
                                 CurrentScreen.ABOUT -> AboutScreen()
@@ -253,7 +371,7 @@ fun FavListScreen(musicItems: List<MusicItem>, isTablet: Boolean, onItemClick: (
                 modifier = Modifier.padding(bottom = 16.dp))
             if (musicItems.isEmpty())
                 Text("No tienes favoritos aún.",
-                     style = MaterialTheme.typography.bodyLarge)
+                    style = MaterialTheme.typography.bodyLarge)
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 150.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -313,10 +431,10 @@ fun TuneGridCard(item: MusicItem, onClick: () -> Unit, onFavClick: (MusicItem) -
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxWidth().height(140.dp).background(Color.LightGray)
-                      )
+            )
             Column(modifier = Modifier.padding(12.dp),
-                   horizontalAlignment = Alignment.CenterHorizontally
-                  )
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
             {
 
                 Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -356,29 +474,79 @@ fun DetailItemScreen(item: MusicItem, onFavClick: () -> Unit) {
 
 @Composable
 fun DetailFavScreen(item: MusicItem) {
+    // Variable para guardar lo que estás escribiendo ahora mismo
+    var newComment by remember { mutableStateOf("") }
+
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
         DetailHeader(item)
+
         Spacer(modifier = Modifier.height(24.dp))
         HorizontalDivider()
+
         Text(
             "Comentarios",
-             style = MaterialTheme.typography.titleMedium,
-             modifier = Modifier.padding(16.dp),
-             color = MaterialTheme.colorScheme.primary
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        // --- ZONA PARA AÑADIR COMENTARIO ---
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = newComment,
+                onValueChange = { newComment = it },
+                label = { Text("Escribe un comentario...") },
+                modifier = Modifier.weight(1f)
             )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    if (newComment.isNotBlank()) {
+                        // Al ser SnapshotStateList, al hacer .add la pantalla se actualiza sola
+                        // CAMBIO: Ponemos el 0 para que se añada al principio
+                        item.comments.add(0, newComment)
+                        newComment = "" // Limpiamos el campo
+                    }
+                },
+                // Deshabilitamos el botón si está vacío
+                enabled = newComment.isNotBlank()
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+        // -----------------------------------
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if(item.comments.isEmpty()){
+            Text("Sé el primero en comentar.", modifier = Modifier.padding(16.dp), color = Color.Gray)
+        }
+
+        // Mostramos la lista (quitamos reversed porque ya añadimos al principio)
         item.comments.forEach { comment ->
             Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant))
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant))
             {
                 Row(modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically)
                 {
                     Icon(Icons.Filled.Person,
-                         null,
-                         modifier = Modifier.size(24.dp))
-                    Spacer(modifier = Modifier.width(8.dp)); Text(comment)
+                        null,
+                        modifier = Modifier.size(24.dp))
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // AQUI AÑADIMOS EL BOTON DE BORRAR RESPETANDO TU ROW
+                    Text(comment, modifier = Modifier.weight(1f))
+
+                    IconButton(onClick = { item.comments.remove(comment) }) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Borrar", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
@@ -402,29 +570,32 @@ fun DetailHeader(item: MusicItem) {
 
 @Composable
 fun ProfileScreen() {
+    var isLoggedIn by remember { mutableStateOf(true) }
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp),
-           horizontalAlignment = Alignment.CenterHorizontally,
-           verticalArrangement = Arrangement.Center)
-    {
-        Icon(
-            Icons.Filled.Person,
-            null,
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary
-            )
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center) {
+
+        Icon(Icons.Filled.Person, null, modifier = Modifier.size(100.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Usuario: Joaquín", style = MaterialTheme.typography.headlineSmall)
-        Text("joaquinity@gmail.com", style = MaterialTheme.typography.bodyMedium)
+        if (isLoggedIn) {
+            Text("Usuario: Joaquín", style = MaterialTheme.typography.headlineSmall)
+            Text("joaquinity@gmail.com", style = MaterialTheme.typography.bodyMedium)
+        } else {
+            Text("Invitado", style = MaterialTheme.typography.headlineSmall)
+            Text("Inicia sesión para ver tus datos", style = MaterialTheme.typography.bodyMedium)
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { },
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-              )
-        {
-            Text("Cerrar Sesión")
+            onClick = { isLoggedIn = !isLoggedIn },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isLoggedIn) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text(if (isLoggedIn) "Cerrar Sesión" else "Iniciar Sesión")
         }
     }
 }
@@ -433,30 +604,31 @@ fun ProfileScreen() {
 fun AboutScreen() {
     val context = LocalContext.current
     Column(modifier = Modifier.fillMaxSize().padding(16.dp),
-           horizontalAlignment = Alignment.CenterHorizontally,
-           verticalArrangement = Arrangement.Center)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center)
     {
         Text("TuneNet", fontSize = 38.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-        Text("Versión: 2.2", style = MaterialTheme.typography.bodyLarge)
+        Text("Versión: 2.3", style = MaterialTheme.typography.bodyLarge)
+        Text("Mi mas sincero pesamen a lo pasado en las vias de Adamuz", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick =
             {
-            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse("mailto:");
-                putExtra(Intent.EXTRA_EMAIL,
-                arrayOf("joaquinity@gmail.com"))
-                                                                         }
+                val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:");
+                    putExtra(Intent.EXTRA_EMAIL,
+                        arrayOf("joaquinity@gmail.com"))
+                }
 
-            try
-            { context.startActivity(Intent.createChooser(emailIntent, "Enviar correo...")) }
-            catch (e: Exception) {}
+                try
+                { context.startActivity(Intent.createChooser(emailIntent, "Enviar correo...")) }
+                catch (e: Exception) {}
 
             })
         {
             Icon(Icons.Filled.Email,
-                 null);
-                 Spacer(modifier = Modifier.width(8.dp));
-                 Text("Soporte")
+                null);
+            Spacer(modifier = Modifier.width(8.dp));
+            Text("Soporte")
         }
     }
 }
