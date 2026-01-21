@@ -128,9 +128,7 @@ class MainActivity : ComponentActivity() {
                 {
                     sampleMusicData.filter {
 
-                        it.title.contains(searchText, ignoreCase = true)
-                                ||
-                                it.artist.contains(searchText, ignoreCase = true)
+                        it.title.contains(searchText, ignoreCase = true) || it.artist.contains(searchText, ignoreCase = true)
 
                     }
 
@@ -301,7 +299,6 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        // AQUI HE QUITADO EL FLOATING ACTION BUTTON COMO PEDISTE
                     ) { innerPadding ->
                         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                             when (currentScreen) {
