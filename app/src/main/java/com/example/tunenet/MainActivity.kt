@@ -221,7 +221,8 @@ fun TuneNetApp(viewModel: MainViewModel) {
                         tracks = tracks,
                         isTablet = isTablet,
                         onTrackClick = { track ->
-                            viewModel.playTrack(track)
+                            viewModel.playTrack(track) // Esto hace que suene
+                            navController.navigate(Screen.Detail.createRoute(track.id)) // ESTO TE LLEVA AL DETALLE
                         },
                         onFavoriteClick = { track -> viewModel.addFavorite(track) },
                         currentTrackId = viewModel.currentPlayingTrack?.id
@@ -246,7 +247,8 @@ fun TuneNetApp(viewModel: MainViewModel) {
                             preview = favorite.preview,
                             duration = favorite.duration
                         )
-                        viewModel.playTrack(track)
+                        viewModel.playTrack(track) // Esto hace que suene
+                        navController.navigate(Screen.Detail.createRoute(track.id)) // ESTO TE LLEVA AL DETALLE
                     }
                 }
                 composable(Screen.Profile.route) {
@@ -307,11 +309,9 @@ fun MiniPlayer(
                 }
                 IconButton(onClick = onTogglePlay) {
                     Icon(
-                        if (isPlaying) Icons.Default.PlayArrow else Icons.Default.PlayArrow, // Usar iconos reales de play/pause
-                        contentDescription = null
+                        imageVector = if (isPlaying) Icons.Default.Close else Icons.Default.PlayArrow,
+                        contentDescription = if (isPlaying) "Pausar" else "Reproducir"
                     )
-                    // Nota: Aquí debería usar Icons.Filled.Pause pero para simplificar uso PlayArrow
-                    // Corregiré los iconos en el siguiente paso para usar los correctos
                 }
             }
         }

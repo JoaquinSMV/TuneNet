@@ -49,7 +49,8 @@ class MainViewModel(
         _exoPlayer = ExoPlayer.Builder(application).build().apply {
             addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
-                    isPlaying = isPlayingChanged
+                    // USAMOS EL PUNTERO A LA CLASE PARA EVITAR EL CONFLICTO
+                    this@MainViewModel.isPlaying = isPlayingChanged
                     if (isPlayingChanged) {
                         startProgressUpdate()
                     } else {
@@ -59,7 +60,7 @@ class MainViewModel(
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_ENDED) {
-                        isPlaying = false
+                        this@MainViewModel.isPlaying = false // AQUÍ TAMBIÉN
                         playbackProgress = 0f
                         stopProgressUpdate()
                     }
