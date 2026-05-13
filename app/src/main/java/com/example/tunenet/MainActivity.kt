@@ -44,11 +44,10 @@ import com.example.tunenet.ui.viewmodel.MainViewModelFactory
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Splash Screen (Mantenemos tu lógica de animación)
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        splashScreen.setKeepOnScreenCondition { false } // Se maneja por tiempo o carga si fuera necesario
+        splashScreen.setKeepOnScreenCondition { false }
         splashScreen.setOnExitAnimationListener { splashScreenView ->
             val slideUp = ObjectAnimator.ofFloat(splashScreenView.iconView, View.TRANSLATION_Y, 0f, -splashScreenView.view.height.toFloat())
             slideUp.interpolator = AnticipateInterpolator()
@@ -62,7 +61,6 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        // Inicialización de dependencias (Manual DI para simplicidad en la práctica)
         val database = TuneDatabase.getDatabase(this)
         val apiService = DeezerApiService.create()
         val repository = MusicRepository(apiService, database.tuneDao())
@@ -80,150 +78,152 @@ class MainActivity : ComponentActivity() {
             }
 
             AppTheme(darkTheme = darkTheme) {
-                val windowSize = calculateWindowSizeClass(this)
-                val isTablet = windowSize.widthSizeClass != WindowWidthSizeClass.Compact
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
-                val context = LocalContext.current
+                TuneNetApp(viewModel)
+            }
+        }
+    }
+}
 
-                // Manejo de Toasts desde el ViewModel
-                viewModel.toastMessage?.let { message ->
-                    LaunchedEffect(message) {
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                        viewModel.clearToastMessage()
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@Composable
+fun TuneNetApp(viewModel: MainViewModel) {
+    val context = LocalContext.current
+    val windowSize = calculateWindowSizeClass(context as MainActivity)
+    val isTablet = windowSize.widthSizeClass != WindowWidthSizeClass.Compact
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Manejo de Toasts
+    viewModel.toastMessage?.let { message ->
+        LaunchedEffect(message) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.clearToastMessage()
+        }
+    }
+
+    Row(modifier = Modifier.fillMaxSize()) {
+        if (isTablet) {
+            NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
+                Spacer(modifier = Modifier.weight(1f))
+                NavigationRailItem(
+                    icon = { Icon(Icons.Filled.Home, null) },
+                    label = { Text("Inicio") },
+                    selected = currentRoute == Screen.List.route,
+                    onClick = { navController.navigate(Screen.List.route) }
+                )
+                NavigationRailItem(
+                    icon = { Icon(Icons.Filled.Favorite, null) },
+                    label = { Text("Favoritos") },
+                    selected = currentRoute == Screen.Favorites.route,
+                    onClick = { navController.navigate(Screen.Favorites.route) }
+                )
+                NavigationRailItem(
+                    icon = { Icon(Icons.Filled.Person, null) },
+                    label = { Text("Perfil") },
+                    selected = currentRoute == Screen.Profile.route,
+                    onClick = { navController.navigate(Screen.Profile.route) }
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+
+        Scaffold(
+            modifier = Modifier.weight(1f),
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        if (currentRoute == Screen.List.route) {
+                            TextField(
+                                value = viewModel.searchText,
+                                onValueChange = { viewModel.onSearchTextChanged(it) },
+                                placeholder = { Text("Buscar en Deezer...") },
+                                leadingIcon = { Icon(Icons.Default.Search, null) },
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                                ),
+                                modifier = Modifier.fillMaxWidth(0.8f)
+                            )
+                        } else {
+                            Text("TuneNet 3.0", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                        }
+                    },
+                    navigationIcon = {
+                        if (currentRoute != Screen.List.route && !isTablet) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.Default.ArrowBack, null)
+                            }
+                        }
+                    }
+                )
+            },
+            bottomBar = {
+                if (!isTablet) {
+                    NavigationBar {
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.Home, null) },
+                            label = { Text("Inicio") },
+                            selected = currentRoute == Screen.List.route,
+                            onClick = { navController.navigate(Screen.List.route) }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.Favorite, null) },
+                            label = { Text("Favoritos") },
+                            selected = currentRoute == Screen.Favorites.route,
+                            onClick = { navController.navigate(Screen.Favorites.route) }
+                        )
+                        NavigationBarItem(
+                            icon = { Icon(Icons.Filled.Person, null) },
+                            label = { Text("Perfil") },
+                            selected = currentRoute == Screen.Profile.route,
+                            onClick = { navController.navigate(Screen.Profile.route) }
+                        )
                     }
                 }
-
-                Row(modifier = Modifier.fillMaxSize()) {
-                    if (isTablet) {
-                        NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceVariant) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            NavigationRailItem(
-                                icon = { Icon(Icons.Filled.Home, null) },
-                                label = { Text("Inicio") },
-                                selected = currentRoute == Screen.List.route,
-                                onClick = { navController.navigate(Screen.List.route) }
-                            )
-                            NavigationRailItem(
-                                icon = { Icon(Icons.Filled.Favorite, null) },
-                                label = { Text("Favoritos") },
-                                selected = currentRoute == Screen.Favorites.route,
-                                onClick = { navController.navigate(Screen.Favorites.route) }
-                            )
-                            NavigationRailItem(
-                                icon = { Icon(Icons.Filled.Person, null) },
-                                label = { Text("Perfil") },
-                                selected = currentRoute == Screen.Profile.route,
-                                onClick = { navController.navigate(Screen.Profile.route) }
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-
-                    Scaffold(
-                        topBar = {
-                            CenterAlignedTopAppBar(
-                                title = {
-                                    if (currentRoute == Screen.List.route) {
-                                        TextField(
-                                            value = viewModel.searchText,
-                                            onValueChange = { viewModel.onSearchTextChanged(it) },
-                                            placeholder = { Text("Buscar en Deezer...") },
-                                            leadingIcon = { Icon(Icons.Default.Search, null) },
-                                            singleLine = true,
-                                            colors = TextFieldDefaults.colors(
-                                                focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                                            ),
-                                            modifier = Modifier.fillMaxWidth(0.8f)
-                                        )
-                                    } else {
-                                        Text("TuneNet 3.0", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                                    }
-                                },
-                                navigationIcon = {
-                                    if (currentRoute != Screen.List.route && !isTablet) {
-                                        IconButton(onClick = { navController.popBackStack() }) {
-                                            Icon(Icons.Default.ArrowBack, null)
-                                        }
-                                    }
-                                }
-                            )
+            }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = Screen.List.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(Screen.List.route) {
+                    val tracks by viewModel.searchResults.collectAsState()
+                    TrackListScreen(
+                        tracks = tracks,
+                        isTablet = isTablet,
+                        onTrackClick = { track ->
+                            navController.navigate(Screen.Detail.createRoute(track.id))
                         },
-                        bottomBar = {
-                            if (!isTablet) {
-                                NavigationBar {
-                                    NavigationBarItem(
-                                        icon = { Icon(Icons.Filled.Home, null) },
-                                        label = { Text("Inicio") },
-                                        selected = currentRoute == Screen.List.route,
-                                        onClick = { navController.navigate(Screen.List.route) }
-                                    )
-                                    NavigationBarItem(
-                                        icon = { Icon(Icons.Filled.Favorite, null) },
-                                        label = { Text("Favoritos") },
-                                        selected = currentRoute == Screen.Favorites.route,
-                                        onClick = { navController.navigate(Screen.Favorites.route) }
-                                    )
-                                    NavigationBarItem(
-                                        icon = { Icon(Icons.Filled.Person, null) },
-                                        label = { Text("Perfil") },
-                                        selected = currentRoute == Screen.Profile.route,
-                                        onClick = { navController.navigate(Screen.Profile.route) }
-                                    )
-                                }
-                            }
-                        }
-                    ) { innerPadding ->
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screen.List.route,
-                            modifier = Modifier.padding(innerPadding)
-                        ) {
-                            composable(Screen.List.route) {
-                                val tracks by viewModel.searchResults.collectAsState()
-                                TrackListScreen(
-                                    tracks = tracks,
-                                    isTablet = isTablet,
-                                    onTrackClick = { track ->
-                                        // Navegación con argumentos complejos simplificada por ID
-                                        // Para una app real, pasaríamos el objeto o usaríamos un SharedViewModel
-                                        navController.navigate(Screen.Detail.createRoute(track.id))
-                                    },
-                                    onFavoriteClick = { track -> viewModel.addFavorite(track) }
-                                )
-                            }
-                            composable(
-                                route = Screen.Detail.route,
-                                arguments = listOf(navArgument("trackId") { type = NavType.LongType })
-                            ) { backStackEntry ->
-                                val trackId = backStackEntry.arguments?.getLong("trackId")
-                                val tracks by viewModel.searchResults.collectAsState()
-                                val track = tracks.find { it.id == trackId }
-                                track?.let { DetailScreen(it, viewModel) }
-                            }
-                            composable(Screen.Favorites.route) {
-                                FavoritesScreen(viewModel) { favorite ->
-                                    // Re-mapear FavoriteEntity a DeezerTrack para DetailScreen
-                                    val track = DeezerTrack(
-                                        id = favorite.id,
-                                        title = favorite.title,
-                                        artist = DeezerArtist(favorite.artistName),
-                                        album = DeezerAlbum(favorite.albumTitle, favorite.albumCover),
-                                        preview = favorite.preview,
-                                        duration = favorite.duration
-                                    )
-                                    // Usamos una ruta temporal o la misma DetailScreen
-                                    // Para este ejercicio, mostramos el detalle igual
-                                    DetailScreen(track, viewModel)
-                                }
-                            }
-                            composable(Screen.Profile.route) {
-                                ProfileScreen(viewModel)
-                            }
-                        }
+                        onFavoriteClick = { track -> viewModel.addFavorite(track) }
+                    )
+                }
+                composable(
+                    route = Screen.Detail.route,
+                    arguments = listOf(navArgument("trackId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val trackId = backStackEntry.arguments?.getLong("trackId")
+                    val tracks by viewModel.searchResults.collectAsState()
+                    val track = tracks.find { it.id == trackId }
+                    track?.let { DetailScreen(it, viewModel) }
+                }
+                composable(Screen.Favorites.route) {
+                    FavoritesScreen(viewModel) { favorite ->
+                        val track = DeezerTrack(
+                            id = favorite.id,
+                            title = favorite.title,
+                            artist = DeezerArtist(favorite.artistName),
+                            album = DeezerAlbum(favorite.albumTitle, favorite.albumCover),
+                            preview = favorite.preview,
+                            duration = favorite.duration
+                        )
+                        DetailScreen(track, viewModel)
                     }
+                }
+                composable(Screen.Profile.route) {
+                    ProfileScreen(viewModel)
                 }
             }
         }
