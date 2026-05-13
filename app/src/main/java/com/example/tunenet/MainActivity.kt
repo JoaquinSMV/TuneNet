@@ -211,16 +211,7 @@ fun TuneNetApp(viewModel: MainViewModel) {
                 }
                 composable(Screen.Favorites.route) {
                     FavoritesScreen(viewModel) { favorite ->
-                        val track = DeezerTrack(
-                            id = favorite.id,
-                            title = favorite.title,
-                            artist = DeezerArtist(favorite.artistName),
-                            album = DeezerAlbum(favorite.albumTitle, favorite.albumCover),
-                            preview = favorite.preview,
-                            duration = favorite.duration
-                        )
-                        DetailScreen(track, viewModel)
-                    }
+                        navController.navigate(Screen.Detail.createRoute(favorite.id))                    }
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(viewModel)

@@ -21,10 +21,14 @@ import com.example.tunenet.data.local.FavoriteEntity
 import com.example.tunenet.ui.viewmodel.MainViewModel
 
 @Composable
-fun FavoritesScreen(viewModel: MainViewModel, onTrackClick: (FavoriteEntity) -> Unit) {
-    val favorites by viewModel.favorites.collectAsState()
+fun FavoritesScreen(
+    viewModel: MainViewModel,
+    onTrackClick: (FavoriteEntity) -> Unit // QUITADO EL @COMPOSABLE AQUÍ
+) {
+    val favorites by viewModel.favorites.collectAsState(initial = emptyList())
     var favoriteToDelete by remember { mutableStateOf<FavoriteEntity?>(null) }
 
+    // Diálogo de confirmación
     if (favoriteToDelete != null) {
         AlertDialog(
             onDismissRequest = { favoriteToDelete = null },
@@ -44,33 +48,59 @@ fun FavoritesScreen(viewModel: MainViewModel, onTrackClick: (FavoriteEntity) -> 
         )
     }
 
-    if (favorites.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No tienes favoritos aún", style = MaterialTheme.typography.titleMedium)
-        }
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(favorites) { favorite ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().clickable { onTrackClick(favorite) },
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                ) {
-                    Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        AsyncImage(
-                            model = favorite.albumCover,
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text(text = favorite.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(text = favorite.artistName, style = MaterialTheme.typography.bodyMedium)
-                        }
-                        IconButton(onClick = { favoriteToDelete = favorite }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text(
+            text = "Mis Favoritos",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        if (favorites.isEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("No tienes favoritos aún", style = MaterialTheme.typography.bodyLarge)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(favorites) { favorite ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onTrackClick(favorite) },
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AsyncImage(
+                                model = favorite.albumCover,
+                                contentDescription = null,
+                                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                                Text(
+                                    text = favorite.title,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = favorite.artistName,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                            IconButton(onClick = { favoriteToDelete = favorite }) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Eliminar",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
