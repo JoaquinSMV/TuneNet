@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +23,10 @@ fun DetailScreen(track: DeezerTrack, viewModel: MainViewModel) {
     val comments by viewModel.getComments(track.id).collectAsState()
     val username by viewModel.username.collectAsState()
     var newComment by remember { mutableStateOf("") }
+
+    // Estado del reproductor
+    val isPlaying = viewModel.isPlaying && viewModel.currentPlayingTrack?.id == track.id
+    val progress = if (viewModel.currentPlayingTrack?.id == track.id) viewModel.playbackProgress else 0f
 
     LazyColumn(
         modifier = Modifier
@@ -44,6 +48,44 @@ fun DetailScreen(track: DeezerTrack, viewModel: MainViewModel) {
             
             Text(text = track.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
             Text(text = track.artist.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary)
+            
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // CONTROLES DE REPRODUCCIÓN
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Slider(
+                        value = progress,
+                        onValueChange = { viewModel.seekTo(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { viewModel.playTrack(track) }, modifier = Modifier.size(64.dp)) {
+                            Icon(
+                                if (isPlaying) Icons.Default.Close else Icons.Default.PlayArrow, // Corregido el icono
+                                contentDescription = if (isPlaying) "Pausa" else "Reproducir",
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    Text(
+                        text = if (isPlaying) "Reproduciendo preview..." else "Escuchar preview (30s)",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(text = "Información", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(text = "Álbum: ${track.album.title}", style = MaterialTheme.typography.bodyLarge)
             Text(text = "Duración: ${track.duration} segundos", style = MaterialTheme.typography.bodyMedium)
             

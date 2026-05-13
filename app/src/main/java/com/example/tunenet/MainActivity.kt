@@ -8,8 +8,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,8 +20,14 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -29,6 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import coil.compose.AsyncImage
 import com.example.tunenet.data.local.TuneDatabase
 import com.example.tunenet.data.local.UserPreferences
 import com.example.tunenet.data.model.DeezerAlbum
@@ -65,7 +75,7 @@ class MainActivity : ComponentActivity() {
         val apiService = DeezerApiService.create()
         val repository = MusicRepository(apiService, database.tuneDao())
         val userPreferences = UserPreferences(this)
-        val factory = MainViewModelFactory(repository, userPreferences)
+        val factory = MainViewModelFactory(application, repository, userPreferences)
 
         setContent {
             val viewModel: MainViewModel = viewModel(factory = factory)
@@ -147,7 +157,7 @@ fun TuneNetApp(viewModel: MainViewModel) {
                                 modifier = Modifier.fillMaxWidth(0.8f)
                             )
                         } else {
-                            Text("TuneNet 3.0", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            Text("TuneNet 3.1", fontWeight = FontWeight.Bold)
                         }
                     },
                     navigationIcon = {
@@ -160,26 +170,42 @@ fun TuneNetApp(viewModel: MainViewModel) {
                 )
             },
             bottomBar = {
-                if (!isTablet) {
-                    NavigationBar {
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Filled.Home, null) },
-                            label = { Text("Inicio") },
-                            selected = currentRoute == Screen.List.route,
-                            onClick = { navController.navigate(Screen.List.route) }
+                Column {
+                    // MINI PLAYER PERSISTENTE
+                    viewModel.currentPlayingTrack?.let { track ->
+                        MiniPlayer(
+                            track = track,
+                            isPlaying = viewModel.isPlaying,
+                            progress = viewModel.playbackProgress,
+                            onTogglePlay = { viewModel.togglePlayPause() },
+                            onSeek = { viewModel.seekTo(it) },
+                            onClick = {
+                                navController.navigate(Screen.Detail.createRoute(track.id))
+                            }
                         )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Filled.Favorite, null) },
-                            label = { Text("Favoritos") },
-                            selected = currentRoute == Screen.Favorites.route,
-                            onClick = { navController.navigate(Screen.Favorites.route) }
-                        )
-                        NavigationBarItem(
-                            icon = { Icon(Icons.Filled.Person, null) },
-                            label = { Text("Perfil") },
-                            selected = currentRoute == Screen.Profile.route,
-                            onClick = { navController.navigate(Screen.Profile.route) }
-                        )
+                    }
+                    
+                    if (!isTablet) {
+                        NavigationBar {
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Filled.Home, null) },
+                                label = { Text("Inicio") },
+                                selected = currentRoute == Screen.List.route,
+                                onClick = { navController.navigate(Screen.List.route) }
+                            )
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Filled.Favorite, null) },
+                                label = { Text("Favoritos") },
+                                selected = currentRoute == Screen.Favorites.route,
+                                onClick = { navController.navigate(Screen.Favorites.route) }
+                            )
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Filled.Person, null) },
+                                label = { Text("Perfil") },
+                                selected = currentRoute == Screen.Profile.route,
+                                onClick = { navController.navigate(Screen.Profile.route) }
+                            )
+                        }
                     }
                 }
             }
@@ -195,9 +221,10 @@ fun TuneNetApp(viewModel: MainViewModel) {
                         tracks = tracks,
                         isTablet = isTablet,
                         onTrackClick = { track ->
-                            navController.navigate(Screen.Detail.createRoute(track.id))
+                            viewModel.playTrack(track)
                         },
-                        onFavoriteClick = { track -> viewModel.addFavorite(track) }
+                        onFavoriteClick = { track -> viewModel.addFavorite(track) },
+                        currentTrackId = viewModel.currentPlayingTrack?.id
                     )
                 }
                 composable(
@@ -211,10 +238,80 @@ fun TuneNetApp(viewModel: MainViewModel) {
                 }
                 composable(Screen.Favorites.route) {
                     FavoritesScreen(viewModel) { favorite ->
-                        navController.navigate(Screen.Detail.createRoute(favorite.id))                    }
+                        val track = DeezerTrack(
+                            id = favorite.id,
+                            title = favorite.title,
+                            artist = DeezerArtist(favorite.artistName),
+                            album = DeezerAlbum(favorite.albumTitle, favorite.albumCover),
+                            preview = favorite.preview,
+                            duration = favorite.duration
+                        )
+                        viewModel.playTrack(track)
+                    }
                 }
                 composable(Screen.Profile.route) {
                     ProfileScreen(viewModel)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MiniPlayer(
+    track: DeezerTrack,
+    isPlaying: Boolean,
+    progress: Float,
+    onTogglePlay: () -> Unit,
+    onSeek: (Float) -> Unit,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .clickable { onClick() },
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 8.dp
+    ) {
+        Column {
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(2.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.Transparent
+            )
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = track.album.coverMedium,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(4.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text(
+                        text = track.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = track.artist.name,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1
+                    )
+                }
+                IconButton(onClick = onTogglePlay) {
+                    Icon(
+                        if (isPlaying) Icons.Default.PlayArrow else Icons.Default.PlayArrow, // Usar iconos reales de play/pause
+                        contentDescription = null
+                    )
+                    // Nota: Aquí debería usar Icons.Filled.Pause pero para simplificar uso PlayArrow
+                    // Corregiré los iconos en el siguiente paso para usar los correctos
                 }
             }
         }

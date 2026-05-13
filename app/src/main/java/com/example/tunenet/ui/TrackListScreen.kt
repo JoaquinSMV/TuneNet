@@ -1,5 +1,6 @@
 package com.example.tunenet.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,11 +12,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,7 +31,8 @@ fun TrackListScreen(
     tracks: List<DeezerTrack>,
     isTablet: Boolean,
     onTrackClick: (DeezerTrack) -> Unit,
-    onFavoriteClick: (DeezerTrack) -> Unit
+    onFavoriteClick: (DeezerTrack) -> Unit,
+    currentTrackId: Long? = null
 ) {
     if (isTablet) {
         LazyVerticalGrid(
@@ -38,7 +42,7 @@ fun TrackListScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(tracks) { track ->
-                TrackGridItem(track, onTrackClick, onFavoriteClick)
+                TrackGridItem(track, onTrackClick, onFavoriteClick, track.id == currentTrackId)
             }
         }
     } else {
@@ -47,27 +51,42 @@ fun TrackListScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(tracks) { track ->
-                TrackListItem(track, onTrackClick, onFavoriteClick)
+                TrackListItem(track, onTrackClick, onFavoriteClick, track.id == currentTrackId)
             }
         }
     }
 }
 
 @Composable
-fun TrackListItem(track: DeezerTrack, onClick: (DeezerTrack) -> Unit, onFav: (DeezerTrack) -> Unit) {
+fun TrackListItem(track: DeezerTrack, onClick: (DeezerTrack) -> Unit, onFav: (DeezerTrack) -> Unit, isPlaying: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick(track) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        border = if (isPlaying) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = track.album.coverMedium,
-                contentDescription = null,
-                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
+            Box(contentAlignment = Alignment.Center) {
+                AsyncImage(
+                    model = track.album.coverMedium,
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                    alpha = if (isPlaying) 0.5f else 1f
+                )
+                if (isPlaying) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+                }
+            }
             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(text = track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = track.title, 
+                    fontWeight = FontWeight.Bold, 
+                    maxLines = 1, 
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified
+                )
                 Text(text = track.artist.name, style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = { onFav(track) }) {
@@ -78,20 +97,35 @@ fun TrackListItem(track: DeezerTrack, onClick: (DeezerTrack) -> Unit, onFav: (De
 }
 
 @Composable
-fun TrackGridItem(track: DeezerTrack, onClick: (DeezerTrack) -> Unit, onFav: (DeezerTrack) -> Unit) {
+fun TrackGridItem(track: DeezerTrack, onClick: (DeezerTrack) -> Unit, onFav: (DeezerTrack) -> Unit, isPlaying: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick(track) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPlaying) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        border = if (isPlaying) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
-            AsyncImage(
-                model = track.album.coverMedium,
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
+            Box(contentAlignment = Alignment.Center) {
+                AsyncImage(
+                    model = track.album.coverMedium,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                    alpha = if (isPlaying) 0.5f else 1f
+                )
+                if (isPlaying) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White, modifier = Modifier.size(48.dp))
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = track.title, 
+                fontWeight = FontWeight.Bold, 
+                maxLines = 1, 
+                overflow = TextOverflow.Ellipsis,
+                color = if (isPlaying) MaterialTheme.colorScheme.primary else Color.Unspecified
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = track.artist.name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 IconButton(onClick = { onFav(track) }) {
