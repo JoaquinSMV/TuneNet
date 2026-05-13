@@ -221,8 +221,9 @@ fun TuneNetApp(viewModel: MainViewModel) {
                         tracks = tracks,
                         isTablet = isTablet,
                         onTrackClick = { track ->
-                            viewModel.playTrack(track) // Esto hace que suene
-                            navController.navigate(Screen.Detail.createRoute(track.id)) // ESTO TE LLEVA AL DETALLE
+                            // Si ya estaba sonando otro track, pausamos antes de ir al detalle
+                            if (viewModel.isPlaying) viewModel.togglePlayPause()
+                            navController.navigate(Screen.Detail.createRoute(track.id))
                         },
                         onFavoriteClick = { track -> viewModel.addFavorite(track) },
                         currentTrackId = viewModel.currentPlayingTrack?.id
@@ -233,8 +234,28 @@ fun TuneNetApp(viewModel: MainViewModel) {
                     arguments = listOf(navArgument("trackId") { type = NavType.LongType })
                 ) { backStackEntry ->
                     val trackId = backStackEntry.arguments?.getLong("trackId")
-                    val tracks by viewModel.searchResults.collectAsState()
-                    val track = tracks.find { it.id == trackId }
+
+                    // Obtenemos ambas listas
+                    val searchResults by viewModel.searchResults.collectAsState()
+                    val favorites by viewModel.favorites.collectAsState()
+
+                    // Buscamos en resultados de búsqueda
+                    val trackFromSearch = searchResults.find { it.id == trackId }
+
+                    // Si no está ahí, buscamos en favoritos y lo convertimos a DeezerTrack
+                    val trackFromFavs = favorites.find { it.id == trackId }?.let { fav ->
+                        DeezerTrack(
+                            id = fav.id,
+                            title = fav.title,
+                            artist = DeezerArtist(fav.artistName),
+                            album = DeezerAlbum(fav.albumTitle, fav.albumCover),
+                            preview = fav.preview,
+                            duration = fav.duration
+                        )
+                    }
+
+                    // Usamos el que hayamos encontrado
+                    val track = trackFromSearch ?: trackFromFavs
                     track?.let { DetailScreen(it, viewModel) }
                 }
                 composable(Screen.Favorites.route) {
@@ -309,6 +330,7 @@ fun MiniPlayer(
                 }
                 IconButton(onClick = onTogglePlay) {
                     Icon(
+                        // Cambiado Close por Pause (asegúrate de tener el import)
                         imageVector = if (isPlaying) Icons.Default.Close else Icons.Default.PlayArrow,
                         contentDescription = if (isPlaying) "Pausar" else "Reproducir"
                     )

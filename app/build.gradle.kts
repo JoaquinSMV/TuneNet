@@ -85,4 +85,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")
+
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
 }
