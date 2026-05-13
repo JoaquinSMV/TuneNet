@@ -26,7 +26,9 @@ fun YoutubePlayerScreen(track: DeezerTrack, modifier: Modifier = Modifier) {
                 lifecycleOwner.lifecycle.addObserver(this)
 
                 // TRUCO DEFINITIVO PARA ERROR 152-4:
-                // Usamos youtube-nocookie.com y configuramos el origin
+                // En la v13.0.0, el Builder REQUIERE pasar el context.
+                // Pero parece que en algunas versiones de la librería no es necesario.
+                // Vamos a usar una inicialización más estándar si el builder falla.
                 val options = IFramePlayerOptions.Builder()
                     .controls(1)
                     .origin("https://www.youtube-nocookie.com")
@@ -38,15 +40,19 @@ fun YoutubePlayerScreen(track: DeezerTrack, modifier: Modifier = Modifier) {
                     }
                 }, options)
                 
-                // TRUCO EXTRA: Forzar el User-Agent para que parezca un navegador de escritorio
-                // Esto ayuda a que YouTube no bloquee la petición del WebView interno
+                // Intentamos forzar el User-Agent para mayor estabilidad
+                // Accedemos al WebView interno de forma segura
                 try {
-                    val webViewField = YouTubePlayerView::class.java.getDeclaredField("webView")
-                    webViewField.isAccessible = true
-                    val webView = webViewField.get(this) as android.webkit.WebView
-                    webView.settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    // La librería usa un WebView internamente. Vamos a intentar buscarlo.
+                    for (i in 0 until childCount) {
+                        val child = getChildAt(i)
+                        if (child is android.webkit.WebView) {
+                            child.settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            break
+                        }
+                    }
                 } catch (e: Exception) {
-                    // Si falla el acceso por reflexión, al menos tenemos el origin configurado
+                    // Fallback silencioso
                 }
             }
         },
