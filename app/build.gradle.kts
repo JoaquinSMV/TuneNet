@@ -65,17 +65,18 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class:1.3.1")
 
     // Navigation
-    implementation(libs.androidx.navigation.compose)
+    implementation("androidx.navigation:navigation-compose:2.8.3")
 
     // Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.retrofit-gson)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // DataStore
-    implementation(libs.datastore-preferences)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 }
