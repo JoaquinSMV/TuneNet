@@ -221,8 +221,6 @@ fun TuneNetApp(viewModel: MainViewModel) {
                         tracks = tracks,
                         isTablet = isTablet,
                         onTrackClick = { track ->
-                            // Si ya estaba sonando otro track, pausamos antes de ir al detalle
-                            if (viewModel.isPlaying) viewModel.togglePlayPause()
                             navController.navigate(Screen.Detail.createRoute(track.id))
                         },
                         onFavoriteClick = { track -> viewModel.addFavorite(track) },

@@ -85,5 +85,5 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")
-    // YouTube Player
-    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:13.0.0")
+    // Chrome Custom Tabs para Streaming Abierto
+    implementation("androidx.browser:browser:1.8.0")
