@@ -52,4 +52,11 @@ class MusicRepository(
     suspend fun addComment(comment: CommentEntity) {
         tuneDao.insertComment(comment)
     }
+
+    // YouTube (Simulado para v4.1 sin API key compleja)
+    suspend fun getYoutubeIdForTrack(title: String, artist: String): String {
+        // En una implementación real, aquí llamaríamos a la API de búsqueda de YouTube
+        // Por ahora devolvemos un ID que funciona bien para pruebas de música
+        return "u1zgFlCw8Aw" 
+    }
 }
