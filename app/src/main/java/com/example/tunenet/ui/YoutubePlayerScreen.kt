@@ -27,9 +27,8 @@ fun YoutubePlayerScreen(track: DeezerTrack, modifier: Modifier = Modifier) {
 
                 // TRUCO DEFINITIVO PARA ERROR 152-4:
                 // En la v13.0.0, el Builder REQUIERE pasar el context.
-                // Pero parece que en algunas versiones de la librería no es necesario.
-                // Vamos a usar una inicialización más estándar si el builder falla.
-                val options = IFramePlayerOptions.Builder()
+                // CORREGIDO: Ahora pasamos 'context' correctamente.
+                val options = IFramePlayerOptions.Builder(context)
                     .controls(1)
                     .origin("https://www.youtube-nocookie.com")
                     .build()
@@ -41,9 +40,7 @@ fun YoutubePlayerScreen(track: DeezerTrack, modifier: Modifier = Modifier) {
                 }, options)
                 
                 // Intentamos forzar el User-Agent para mayor estabilidad
-                // Accedemos al WebView interno de forma segura
                 try {
-                    // La librería usa un WebView internamente. Vamos a intentar buscarlo.
                     for (i in 0 until childCount) {
                         val child = getChildAt(i)
                         if (child is android.webkit.WebView) {
