@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -62,4 +63,19 @@ dependencies {
     //Esto es pa la imagenes asi le damos permisos
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("androidx.compose.material3:material3-window-size-class:1.3.1")
+
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit-gson)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    // DataStore
+    implementation(libs.datastore-preferences)
 }
